@@ -179,12 +179,10 @@ app.put('/api/candidate/:id', (req, res) => {
    }
    const sql = `UPDATE candidates SET party_id = ? WHERE id = ?`;
    const params = [req.body.party_id, req.params.id];
-   console.log(`~ req.body.party_id, req.params.id`, req.body.party_id, req.params.id)
    
    // result is reponse for db.query
    db.query(sql, params, (err, result) => {
       if (err) {
-      console.log(`~ err`, err)
          
          // 400 status code - user request was not accepted; responds on res
          res.status(400).json({ error: res.message });

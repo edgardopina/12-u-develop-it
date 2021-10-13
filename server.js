@@ -19,6 +19,63 @@ const db = mysql.createConnection(
    console.log(`Connected to the 'election' database`)
 );
 
+// GET list of all parties - /api/parties api endpoint
+app.get('/api/parties', (req, res) => {
+   const sql = `SELECT * FROM parties`;
+   db.query(sql, (err, rows) => {
+      if (err) {
+         // 500 status code - server errors
+         res.status(500).json({ error: err.message });
+         return; // exits database call
+      }
+      res.json({
+         message: 'success',
+         data: rows,
+      });
+   });
+});
+
+// GET a single party - /api/party/:id - api endpoint
+app.get('/api/party/:id', (req, res) => {
+   const sql = `SELECT * FROM parties WHERE id = ?`;
+   const params = [req.params.id];
+   db.query(sql, params, (err, row) => {
+      if (err) {
+         // 400 status code - user request was not accepted
+         res.status(400).json({ error: err.message });
+         return; // exits database call
+      }
+      res.json({
+         message: 'success',
+         data: row,
+      });
+   });
+});
+
+// Delete a party - needs to be tested from Insomnia
+// res is response for app.delete
+app.delete('/api/party/:id', (req, res) => {
+   const sql = `DELETE FROM parties WHERE id = ?`;
+   const params = [req.params.id];
+   // result is reponse for db.query
+   db.query(sql, params, (err, result) => {
+      if (err) {
+         // 400 status code - user request was not accepted; responds on res
+         res.statusMessage(400).json({ error: res.message });
+      } else if (!result.affectedRows) {
+         // if db.query's result did not affect any rows, then responds on res
+         res.json({ message: 'Party not found' });
+      } else {
+         // found and deleted row; responds on res with data from db.query on result
+         res.json({
+            message: 'deleted',
+            changes: result.affectedRows,
+            id: req.params.id,
+         });
+      }
+   });
+});
+
 // GET list of all potential candidates - /api/candidates api endpoint
 app.get('/api/candidates', (req, res) => {
    const sql = `SELECT 
@@ -110,6 +167,38 @@ app.post('/api/candidate', (req, res) => {
          message: 'success',
          data: req.body,
       });
+   });
+});
+
+// PUT (update) a single candidate - /api/candidate/:id - api endpoint
+app.put('/api/candidate/:id', (req, res) => {
+   const errors = inputCheck(req.body, 'party_id');
+   if (errors) {
+      res.status(400).json({ error: errors });
+      return;
+   }
+   const sql = `UPDATE candidates SET party_id = ? WHERE id = ?`;
+   const params = [req.body.party_id, req.params.id];
+   console.log(`~ req.body.party_id, req.params.id`, req.body.party_id, req.params.id)
+   
+   // result is reponse for db.query
+   db.query(sql, params, (err, result) => {
+      if (err) {
+      console.log(`~ err`, err)
+         
+         // 400 status code - user request was not accepted; responds on res
+         res.status(400).json({ error: res.message });
+      } else if (!result.affectedRows) {
+         // if db.query's result did not affect any rows, then responds on res
+         res.json({ message: 'Candidate not found' });
+      } else {
+         // found and updated row; responds on res with data from db.query on result
+         res.json({
+            message: 'success',
+            changes: result.affectedRows,
+            id: req.params.id,
+         });
+      }
    });
 });
 
